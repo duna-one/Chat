@@ -5,7 +5,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 public class ChatClientHandler extends SimpleChannelInboundHandler<String> {
 
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) {
+    public void channelRead0(ChannelHandlerContext ctx, String msg) {
         System.out.println(msg);
     }
 }

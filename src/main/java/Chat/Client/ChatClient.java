@@ -8,32 +8,45 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ChatClient {
 
-    public static void main(String[] args) throws Exception{
-        new ChatClient("localhost", 8888).run();
-    }
+    private final String username;
 
     private final String host;
     private final int port;
 
-    public ChatClient(String host, int port) {
+    public ChatClient(String host, int port, String username) {
         this.host = host;
         this.port = port;
+        this.username = username;
     }
 
-    public void run() throws Exception{
+    public static void main(String[] args) throws Exception {
+        String Username;
+        System.out.println("Enter Username: ");
+        Username = new BufferedReader(new InputStreamReader(System.in)).readLine();
+
+        new ChatClient("localhost", 8888, Username).run();
+    }
+
+    public void run() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
 
         try {
-            Bootstrap bootstrap = new Bootstrap().group(group).channel(NioSocketChannel.class).handler(new ChatClientInitializer());
+            Bootstrap bootstrap = new Bootstrap()
+                    .group(group)
+                    .channel(NioSocketChannel.class)
+                    .handler(new ChatClientInitializer());
 
             Channel channel = bootstrap.connect(host, port).sync().channel();
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-            while (true){
-                channel.writeAndFlush(in.readLine()+"\r\n");
+            while (true) {
+                channel.writeAndFlush(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()) +
+                        " " + username + ": " + in.readLine() + "\r\n");
             }
 
         }

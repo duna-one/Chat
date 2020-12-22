@@ -33,7 +33,7 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<String> {
         Channel incoming = ctx.channel();
         for(Channel channel : channels){
             if(channel != incoming){
-                channel.writeAndFlush("[" + incoming.remoteAddress() + "] " + msg + "\n");
+                channel.writeAndFlush(msg + "\n");
             }
         }
     }
