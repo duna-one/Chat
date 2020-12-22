@@ -8,6 +8,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -49,8 +50,9 @@ public class ChatClient {
                         " " + username + ": " + in.readLine() + "\r\n");
             }
 
-        }
-        finally {
+        } catch (ConnectException e) {
+            System.out.println("Can't reach server.\nTry again later.");
+        } finally {
             group.shutdownGracefully();
         }
     }
