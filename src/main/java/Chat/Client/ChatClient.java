@@ -9,15 +9,12 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class ChatClient {
 
     private final String username;
-
-    private final String host;
-    private final int port;
+    private final String host; //Host to connect
+    private final int port; //Poet to connect
 
     public ChatClient(String host, int port, String username) {
         this.host = host;
@@ -27,14 +24,17 @@ public class ChatClient {
 
     public static void main(String[] args) throws Exception {
         String Username;
-        System.out.println("Enter Username: ");
+        System.out.println("Type '!Exit' to exit program");
+        System.out.println("Enter username:");
         Username = new BufferedReader(new InputStreamReader(System.in)).readLine();
+        if (Username.equals("!Exit")) return;
 
         new ChatClient("localhost", 8888, Username).run();
     }
 
     public void run() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
+        String input;
 
         try {
             Bootstrap bootstrap = new Bootstrap()
@@ -44,10 +44,13 @@ public class ChatClient {
 
             Channel channel = bootstrap.connect(host, port).sync().channel();
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            channel.writeAndFlush(username + "\n");
 
             while (true) {
-                channel.writeAndFlush(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()) +
-                        " " + username + ": " + in.readLine() + "\r\n");
+                input = in.readLine();
+                if (input.equals("!Exit")) break;
+                else
+                    channel.writeAndFlush(input + "\n");
             }
 
         } catch (ConnectException e) {

@@ -3,37 +3,71 @@ package Chat.Server;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
 
 public class ChatServerHandler extends SimpleChannelInboundHandler<String> {
 
-    private static  final ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+    private static final LinkedList<User> users = new LinkedList<User>();
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        Channel incoming = ctx.channel();
-        for (Channel channel : channels){
-            channel.writeAndFlush("[SERVER] - " + incoming.remoteAddress() + "has joined!\n");
-        }
-        channels.add(incoming);
+        users.add(new User(ctx.channel()));
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
         Channel incoming = ctx.channel();
-        for (Channel channel : channels){
-            channel.writeAndFlush("[SERVER] - " + incoming.remoteAddress() + "has left!\n");
+        User RemovedUser = null;
+        for (User user : users) {
+            if (user.getChannel() == incoming) {
+                RemovedUser = user;
+                break;
+            }
         }
-        channels.remove(incoming);
+        users.remove(RemovedUser);
+        for (User user : users) {
+            assert RemovedUser != null;
+            user.getChannel().writeAndFlush("[SERVER] - " + RemovedUser.getUsername() + " has left!\n");
+        }
+
     }
 
     public void channelRead0(ChannelHandlerContext ctx, String msg) {
         Channel incoming = ctx.channel();
-        for(Channel channel : channels){
-            if(channel != incoming){
-                channel.writeAndFlush(msg + "\n");
+        String senderName = null;
+        boolean newUser = true;
+
+        for (User user : users) { // Проверка на наличие пользователя в активных подключениях
+            if (user.getChannel() == incoming && user.getUsername() != null) {
+                newUser = false;
+                senderName = user.getUsername();
+                break;
+            }
+        }
+
+        if (!newUser) { // Если пользователь авторизовался, то отправляем его сообщение всем
+            for (User user : users) {
+                if (user.getChannel() != incoming) {
+                    user.getChannel().writeAndFlush(
+                            new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date()) +
+                                    " " + senderName + ": " + msg + "\n");
+                }
+            }
+        } else { // Если пользователь новый получаем его username и оповещаем всех о его подключении
+            for (User user : users) {
+                if (user.getChannel() == incoming) {
+                    user.setUsername(msg);
+                    break;
+                }
+            }
+            for (User user : users) {
+                if (user.getChannel() != incoming)
+                    user.getChannel().writeAndFlush("[SERVER] - " + msg + " has joined!\n");
+                else
+                    user.getChannel().writeAndFlush("[SERVER] - welcome to chat, " + msg + "\n");
             }
         }
     }
