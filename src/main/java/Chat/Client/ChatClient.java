@@ -24,7 +24,7 @@ public class ChatClient {
 
     public static void main(String[] args) throws Exception {
         String Username;
-        System.out.println("Type '!Exit' to exit program");
+        System.out.println("Type '!exit' to exit program.");
         System.out.println("Enter username:");
         Username = new BufferedReader(new InputStreamReader(System.in)).readLine();
         if (Username.equals("!Exit")) return;
